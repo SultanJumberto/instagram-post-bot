@@ -1,6 +1,5 @@
 import os
 import tempfile
-import json
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     Application, 
@@ -11,7 +10,6 @@ from telegram.ext import (
     filters
 )
 from instagrapi import Client
-from aiohttp import web
 
 # Статусы для диалога
 PHOTO, CAPTION = range(2)
@@ -119,24 +117,15 @@ async def caption_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     return ConversationHandler.END
 
-async def webhook_handler(request):
-    """Обработчик вебхука от Telegram"""
-    if request.content_type == 'application/json':
-        update_data = await request.json()
-        update = Update.de_json(update_data, application.bot)
-        await application.process_update(update)
-        return web.Response(status=200)
-    return web.Response(status=400)
-
-async def main():
-    global application
-    
+def main():
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    if not token:
-        token = "8318096413:AAFl58y0d_kHV4ep4co-8tX14hIqI9VVl5I"
     
-    # Создаём приложение БЕЗ поллинга и БЕЗ updater
-    application = Application.builder().token(token).updater(None).build()
+    if not token:
+        print("❌ ОШИБКА: Переменная TELEGRAM_BOT_TOKEN не установлена!")
+        print("Добавьте её в Railway → Variables")
+        return
+    
+    application = Application.builder().token(token).build()
     
     # Создаём ConversationHandler для пошагового диалога
     conv_handler = ConversationHandler(
@@ -155,26 +144,7 @@ async def main():
     )
     
     application.add_handler(conv_handler)
-    
-    # Инициализируем приложение
-    await application.initialize()
-    await application.start()
-    
-    # Создаём веб-сервер на порту 18789
-    app = web.Application()
-    app.router.add_post('/', webhook_handler)
-    
-    # Запускаем сервер
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 18789)
-    await site.start()
-    
-    print("✅ Бот запущен и слушает порт 18789")
-    
-    # Ждём завершения
-    await asyncio.Event().wait()
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    main()
