@@ -118,7 +118,7 @@ async def caption_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    token = "8318096413:AAFl58y0d_kHV4ep4co-8tX14hIqI9VVl5I"
     
     if not token:
         print("❌ ОШИБКА: Переменная TELEGRAM_BOT_TOKEN не установлена!")
