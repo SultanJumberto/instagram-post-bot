@@ -78,9 +78,9 @@ async def caption_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await update.message.reply_text("⏳ Публикую пост в Инстаграм...")
         
-        # Авторизация в Инстаграм — ВСТАВЬТЕ СВОИ ДАННЫЕ ЗДЕСЬ!
+        # Авторизация в Инстаграм
         ig_client = Client()
-        ig_username = "ваш_логин_инстаграм"  # ← ЗАМЕНИТЕ НА СВОЙ ЛОГИН (без @)
+        ig_username = "ваш_логин_инстаграм"  # ← ЗАМЕНИТЕ НА СВОЙ ЛОГИН
         ig_password = "ваш_пароль_инстаграм"  # ← ЗАМЕНИТЕ НА СВОЙ ПАРОЛЬ
         
         ig_client.login(ig_username, ig_password)
@@ -114,7 +114,8 @@ def main():
     # Токен бота — уже встроен
     token = "8318096413:AAFl58y0d_kHV4ep4co-8tX14hIqI9VVl5I"
     
-    application = Application.builder().token(token).build()
+    # Создаём приложение БЕЗ встроенного updater
+    application = Application.builder().token(token).updater(None).build()
     
     # Создаём ConversationHandler для пошагового диалога
     conv_handler = ConversationHandler(
@@ -133,7 +134,17 @@ def main():
     )
     
     application.add_handler(conv_handler)
-    application.run_polling(drop_pending_updates=True)
+    
+    # Инициализируем приложение
+    application.initialize()
+    application.start()
+    
+    # Запускаем поллинг вручную (без конфликта)
+    import asyncio
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(application.updater.start_polling(drop_pending_updates=True))
+    loop.run_forever()
 
 if __name__ == "__main__":
     main()
