@@ -1,5 +1,6 @@
 import os
 import tempfile
+import json
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     Application, 
@@ -10,6 +11,7 @@ from telegram.ext import (
     filters
 )
 from instagrapi import Client
+from aiohttp import web
 
 # Статусы для диалога
 PHOTO, CAPTION = range(2)
@@ -117,12 +119,23 @@ async def caption_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     return ConversationHandler.END
 
+async def webhook_handler(request):
+    """Обработчик вебхука от Telegram"""
+    if request.content_type == 'application/json':
+        update_data = await request.json()
+        update = Update.de_json(update_data, application.bot)
+        await application.process_update(update)
+        return web.Response(status=200)
+    return web.Response(status=400)
+
 async def main():
+    global application
+    
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
         token = "8318096413:AAFl58y0d_kHV4ep4co-8tX14hIqI9VVl5I"
     
-    # Создаём приложение БЕЗ поллинга
+    # Создаём приложение БЕЗ поллинга и БЕЗ updater
     application = Application.builder().token(token).updater(None).build()
     
     # Создаём ConversationHandler для пошагового диалога
@@ -147,16 +160,20 @@ async def main():
     await application.initialize()
     await application.start()
     
-    # Запускаем веб-сервер на порту 18789 (куда пересылает Clawdbot)
-    await application.updater.start_webhook(
-        listen="0.0.0.0",
-        port=18789,
-        webhook_url=None,  # Не устанавливаем вебхук — он уже установлен в Clawdbot
-        allowed_updates=Update.ALL_TYPES
-    )
+    # Создаём веб-сервер на порту 18789
+    app = web.Application()
+    app.router.add_post('/', webhook_handler)
+    
+    # Запускаем сервер
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 18789)
+    await site.start()
+    
+    print("✅ Бот запущен и слушает порт 18789")
     
     # Ждём завершения
-    await application.updater.stop()
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     import asyncio
