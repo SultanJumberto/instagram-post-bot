@@ -78,17 +78,10 @@ async def caption_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await update.message.reply_text("⏳ Публикую пост в Инстаграм...")
         
-        # Авторизация в Инстаграм
+        # Авторизация в Инстаграм — ВСТАВЬТЕ СВОИ ДАННЫЕ ЗДЕСЬ!
         ig_client = Client()
-        ig_username = os.environ.get("INSTAGRAM_USERNAME")
-        ig_password = os.environ.get("INSTAGRAM_PASSWORD")
-        
-        if not ig_username or not ig_password:
-            await update.message.reply_text(
-                "❌ Ошибка: не настроены данные Инстаграм.\n"
-                "Добавьте переменные окружения INSTAGRAM_USERNAME и INSTAGRAM_PASSWORD в Railway."
-            )
-            return ConversationHandler.END
+        ig_username = "ваш_логин_инстаграм"  # ← ЗАМЕНИТЕ НА СВОЙ ЛОГИН (без @)
+        ig_password = "ваш_пароль_инстаграм"  # ← ЗАМЕНИТЕ НА СВОЙ ПАРОЛЬ
         
         ig_client.login(ig_username, ig_password)
         
@@ -118,12 +111,8 @@ async def caption_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
+    # Токен бота — уже встроен
     token = "8318096413:AAFl58y0d_kHV4ep4co-8tX14hIqI9VVl5I"
-    
-    if not token:
-        print("❌ ОШИБКА: Переменная TELEGRAM_BOT_TOKEN не установлена!")
-        print("Добавьте её в Railway → Variables")
-        return
     
     application = Application.builder().token(token).build()
     
