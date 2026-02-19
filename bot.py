@@ -141,7 +141,14 @@ def main():
     )
     
     application.add_handler(conv_handler)
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    
+    # Запускаем бота на локальном порту 18789 (куда пересылает Clawdbot)
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=18789,
+        webhook_url="",
+        drop_pending_updates=True
+    )
 
 if __name__ == "__main__":
     main()
