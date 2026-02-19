@@ -114,8 +114,8 @@ def main():
     # Токен бота — уже встроен
     token = "8318096413:AAFl58y0d_kHV4ep4co-8tX14hIqI9VVl5I"
     
-    # Создаём приложение БЕЗ встроенного updater
-    application = Application.builder().token(token).updater(None).build()
+    # Создаём приложение со стандартным updater
+    application = Application.builder().token(token).build()
     
     # Создаём ConversationHandler для пошагового диалога
     conv_handler = ConversationHandler(
@@ -134,17 +134,7 @@ def main():
     )
     
     application.add_handler(conv_handler)
-    
-    # Инициализируем приложение
-    application.initialize()
-    application.start()
-    
-    # Запускаем поллинг вручную (без конфликта)
-    import asyncio
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(application.updater.start_polling(drop_pending_updates=True))
-    loop.run_forever()
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
