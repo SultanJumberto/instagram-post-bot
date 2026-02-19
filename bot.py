@@ -117,12 +117,13 @@ async def caption_received(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     return ConversationHandler.END
 
-def main():
+async def main():
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
         token = "8318096413:AAFl58y0d_kHV4ep4co-8tX14hIqI9VVl5I"
     
-    application = Application.builder().token(token).build()
+    # Создаём приложение БЕЗ поллинга
+    application = Application.builder().token(token).updater(None).build()
     
     # Создаём ConversationHandler для пошагового диалога
     conv_handler = ConversationHandler(
@@ -142,13 +143,21 @@ def main():
     
     application.add_handler(conv_handler)
     
-    # Запускаем бота на локальном порту 18789 (куда пересылает Clawdbot)
-    application.run_webhook(
+    # Инициализируем приложение
+    await application.initialize()
+    await application.start()
+    
+    # Запускаем веб-сервер на порту 18789 (куда пересылает Clawdbot)
+    await application.updater.start_webhook(
         listen="0.0.0.0",
         port=18789,
-        webhook_url="",
-        drop_pending_updates=True
+        webhook_url=None,  # Не устанавливаем вебхук — он уже установлен в Clawdbot
+        allowed_updates=Update.ALL_TYPES
     )
+    
+    # Ждём завершения
+    await application.updater.stop()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
